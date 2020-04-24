@@ -53,6 +53,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
       - name: Download build artifacts
         uses: actions/download-artifact@v1
         with:
@@ -60,7 +61,6 @@ jobs:
           path: dist
       - name: Deploy to Heroku
         run: |
-          git fetch --all --unshallow
           git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
           git push heroku HEAD:refs/heads/master
 
@@ -76,6 +76,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - run: git fetch --prune --unshallow
       - name: Download build artifacts
         uses: actions/download-artifact@v1
         with:
@@ -83,6 +84,5 @@ jobs:
           path: dist
       - name: Deploy to Heroku
         run: |
-          git fetch --all --unshallow
           git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
           git push heroku HEAD:refs/heads/master
