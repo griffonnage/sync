@@ -23,10 +23,22 @@ const io = socketIO(server)
 io.on('connection', (socket) => {
   socket.on('join-room', (room) => {
     socket.join(room)
-    socket.broadcast.to(room).emit('new-user', socket.id)
+    socket.broadcast.to(room).emit('user-join', socket.id)
   })
 
-  socket.on('send-canvas-state', (room: string, canvasState: string) => {
-    socket.broadcast.to(room).emit('new-canvas-state', canvasState)
+  socket.on('leave-room', (room) => {
+    socket.leave(room)
+    socket.broadcast.to(room).emit('user-leave', socket.id)
   })
+
+  socket.on('broadcast-room-data', (room: string, encryptedData: string) => {
+    socket.broadcast.to(room).emit('new-room-data', encryptedData)
+  })
+
+  socket.on(
+    'broadcast-volatile-room-data',
+    (room: string, encryptedData: string) => {
+      socket.volatile.broadcast.to(room).emit('new-room-data', encryptedData)
+    }
+  )
 })
