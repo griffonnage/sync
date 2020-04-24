@@ -63,8 +63,8 @@ jobs:
           git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
           git push heroku HEAD:refs/heads/master
 
-  deploy-staging:
-    name: Deploy Staging
+  deploy-production:
+    name: Deploy Production
     needs: test
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
