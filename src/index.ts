@@ -22,13 +22,11 @@ const io = socketIO(server)
 
 io.on('connection', (socket) => {
   socket.on('join-room', (room) => {
-    logger.info(`socket ${socket.id} joining room ${room}`)
     socket.join(room)
     socket.broadcast.to(room).emit('new-user', socket.id)
   })
 
   socket.on('send-canvas-state', (room: string, canvasState: string) => {
-    logger.info(`socket ${socket.id} sending canvas state in room ${room}`)
     socket.broadcast.to(room).emit('new-canvas-state', canvasState)
   })
 })
