@@ -24,11 +24,18 @@ io.on('connection', (socket) => {
   socket.on('join-room', (room) => {
     socket.join(room)
     socket.broadcast.to(room).emit('user-join', socket.id)
+    io.in(room).emit('user-list', Object.keys(io.sockets.adapter.rooms[room].sockets))
   })
 
   socket.on('leave-room', (room) => {
     socket.leave(room)
     socket.broadcast.to(room).emit('user-leave', socket.id)
+
+    const rooms = io.sockets.adapter.rooms
+    if (room in rooms) {
+      const sockets = rooms[room].sockets
+      socket.broadcast.to(room).emit('user-list', Object.keys(sockets))
+    }
   })
 
   socket.on('broadcast-room-data', (room: string, encryptedData: string) => {
