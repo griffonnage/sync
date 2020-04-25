@@ -24,7 +24,10 @@ io.on('connection', (socket) => {
   socket.on('join-room', (room) => {
     socket.join(room)
     socket.broadcast.to(room).emit('user-join', socket.id)
-    io.in(room).emit('user-list', Object.keys(io.sockets.adapter.rooms[room].sockets))
+    io.in(room).emit(
+      'user-list',
+      Object.keys(io.sockets.adapter.rooms[room].sockets)
+    )
   })
 
   socket.on('leave-room', (room) => {
