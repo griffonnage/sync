@@ -1,6 +1,6 @@
 # Griffonnage - Sync Server
 
-> Scribbl careless drawings with friends, privately
+> Scribble careless drawings with friends, privately
 
 Synchronize drawings from Griffonnage using [Socket-io](https://socket.io).
 
