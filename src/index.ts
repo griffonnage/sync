@@ -1,12 +1,14 @@
 import http from 'http'
 import express from 'express'
 import socketIO from 'socket.io'
+import redisAdapter from 'socket.io-redis'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
 
 require('dotenv').config()
 
 const port = process.env.PORT || 80
+const redisUri = process.env.REDIS_URI || undefined
 
 const logger = pino()
 
@@ -19,6 +21,10 @@ server.listen(port, () => {
 })
 
 const io = socketIO(server)
+if (redisUri) {
+  logger.info('Enabling Socket-IO Redis adapter')
+  io.adapter(redisAdapter(redisUri))
+}
 
 io.on('connection', (socket) => {
   socket.on('join-room', (room) => {
