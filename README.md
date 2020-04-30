@@ -2,6 +2,10 @@
 
 > Scribble careless drawings with friends, privately
 
+[![GitHub Tag](https://img.shields.io/github/tag/griffonnage/griffonnage-sync.svg)](https://github.com/griffonnage/griffonnage-sync/releases/latest)
+[![GitHub Action CI/CD](https://github.com/griffonnage/griffonnage-sync/workflows/CI/CD/badge.svg)](https://github.com/griffonnage/griffonnage-sync/actions?query=workflow%3A%22CI%2FCD%22)
+[![License](https://img.shields.io/github/license/griffonnage/griffonnage-sync)](https://github.com/griffonnage/griffonnage-sync/blob/master/LICENSE)
+
 Synchronize drawings from Griffonnage using [Socket-io](https://socket.io).
 
 ## Build Setup

@@ -10,5 +10,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Initial release of `@griffonnage/sync`
 
-[Unreleased]: https://github.com/griffonnage/sync/compare/0.1.0...HEAD
-[0.1.0]: https://github.com/griffonnage/sync/releases/tag/0.1.0
+[Unreleased]: https://github.com/griffonnage/griffonnage-sync/compare/0.1.0...HEAD
+[0.1.0]: https://github.com/griffonnage/griffonnage-sync/releases/tag/0.1.0
