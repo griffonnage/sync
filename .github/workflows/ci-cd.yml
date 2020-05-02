@@ -70,10 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
 
-    env:
-      HEROKU_APP_ID: ${{ secrets.HEROKU_APP_ID_PRODUCTION }}
-      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
-
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
@@ -82,7 +78,10 @@ jobs:
         with:
           name: build
           path: dist
-      - name: Deploy to Heroku
-        run: |
-          git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
-          git push heroku HEAD:refs/heads/master
+      - name: Deploy to CleverCloud
+        uses: 47ng/actions-clever-cloud@v1
+        with:
+          appID: ${{ secrets.CLEVER_APP_ID_PRODUCTION }}
+        env:
+          CLEVER_TOKEN: ${{ secrets.CLEVER_TOKEN }}
+          CLEVER_SECRET: ${{ secrets.CLEVER_SECRET }}
