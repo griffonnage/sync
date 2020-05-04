@@ -1,6 +1,6 @@
 import http from 'http'
 import express from 'express'
-import socketIO, { Client } from 'socket.io'
+import socketIO from 'socket.io'
 import redisAdapter from 'socket.io-redis'
 import { StatsD } from 'node-statsd'
 import pino from 'pino'
@@ -64,7 +64,7 @@ if (redisUri) {
 io.on('connection', (socket) => {
   stats.increment(Metrics.usersCount)
 
-  io.sockets.clients((err: Error | undefined, clients: Client[]) => {
+  io.sockets.clients((err: Error | undefined, clients: string[]) => {
     if (!err) {
       stats.gauge(Metrics.usersActive, clients.length)
     }
@@ -75,7 +75,7 @@ io.on('connection', (socket) => {
   })
 
   socket.on('disconnect', () => {
-    io.sockets.clients((err: Error | undefined, clients: Client[]) => {
+    io.sockets.clients((err: Error | undefined, clients: string[]) => {
       if (!err) {
         stats.gauge(Metrics.usersActive, clients.length)
       }
@@ -84,37 +84,43 @@ io.on('connection', (socket) => {
 
   socket.on('join-room', (room) => {
     if (!(room in io.sockets.adapter.rooms)) {
+      // NOTE: this will not work properly with redis-adapter
+      // ideally, should call io.sockets.adapter.allRooms()
+      // https://github.com/socketio/socket.io-redis#redisadapterallroomsfnfunction
       stats.increment(Metrics.roomsCount)
     }
 
     socket.join(room)
-    socket.broadcast.to(room).emit(Events.userJoin, socket.id)
-    const sids = Object.keys(io.sockets.adapter.rooms[room].sockets)
-    io.in(room).emit(Events.userList, sids)
+    socket.to(room).emit(Events.userJoin, socket.id)
+
+    io.in(room).clients((err: Error | undefined, clients: string[]) => {
+      if (!err) {
+        io.in(room).emit(Events.userList, clients)
+
+        stats.gauge(Metrics.roomsSize, clients.length)
+      }
+    })
 
     stats.increment(Metrics.roomsJoinCount)
-    stats.gauge(Metrics.roomsSize, sids.length)
   })
 
   socket.on('leave-room', (room) => {
     socket.leave(room)
-    socket.broadcast.to(room).emit(Events.userLeave, socket.id)
+    socket.to(room).emit(Events.userLeave, socket.id)
 
-    const rooms = io.sockets.adapter.rooms
-    if (room in rooms) {
-      const sids = Object.keys(rooms[room].sockets)
-      socket.broadcast.to(room).emit(Events.userList, sids)
+    io.in(room).clients((err: Error | undefined, clients: string[]) => {
+      if (!err) {
+        io.in(room).emit(Events.userList, clients)
 
-      stats.gauge(Metrics.roomsSize, sids.length)
-    } else {
-      stats.gauge(Metrics.roomsSize, 0)
-    }
+        stats.gauge(Metrics.roomsSize, clients.length)
+      }
+    })
 
     stats.increment(Metrics.roomsLeaveCount)
   })
 
   socket.on('broadcast-room-data', (room: string, encryptedData: string) => {
-    socket.broadcast.to(room).emit(Events.newRoomData, encryptedData)
+    socket.to(room).emit(Events.newRoomData, encryptedData)
 
     stats.increment(Metrics.roomsBroadcastDataCount)
     stats.gauge(Metrics.roomsBroadcastDataLength, encryptedData.length)
@@ -123,7 +129,7 @@ io.on('connection', (socket) => {
   socket.on(
     'broadcast-volatile-room-data',
     (room: string, encryptedData: string) => {
-      socket.volatile.broadcast.to(room).emit(Events.newRoomData, encryptedData)
+      socket.volatile.to(room).emit(Events.newRoomData, encryptedData)
 
       stats.increment(Metrics.roomsBroadcastVolatileDataCount)
       stats.gauge(

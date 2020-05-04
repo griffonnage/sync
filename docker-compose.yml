@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+
+  statsd:
+    image: statsd/statsd:latest
+    ports:
+      - 8125:8125
