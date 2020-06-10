@@ -5,8 +5,9 @@ import redisAdapter from 'socket.io-redis'
 import { StatsD } from 'node-statsd'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
+import dotenv from 'dotenv'
 
-require('dotenv').config()
+dotenv.config()
 
 enum Events {
   userJoin = 'user-join',
