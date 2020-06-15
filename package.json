@@ -53,7 +53,7 @@
     "jest": "^26.0.1",
     "prettier": "^2.0.4",
     "ts-jest": "^26.1.0",
-    "ts-node-dev": "^1.0.0-pre.44",
+    "ts-node-dev": "^1.0.0-pre.47",
     "typescript": "^3.9.5"
   },
   "engines": {
