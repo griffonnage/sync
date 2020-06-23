@@ -52,7 +52,7 @@
     "husky": "^4.2.5",
     "jest": "^26.0.1",
     "prettier": "^2.0.4",
-    "ts-jest": "^26.1.0",
+    "ts-jest": "^26.1.1",
     "ts-node-dev": "^1.0.0-pre.49",
     "typescript": "^3.9.5"
   },
