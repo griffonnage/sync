@@ -51,7 +51,7 @@
     "eslint-plugin-prettier": "^3.1.4",
     "husky": "^4.2.5",
     "jest": "^26.1.0",
-    "prettier": "^2.0.4",
+    "prettier": "^2.0.5",
     "ts-jest": "^26.1.2",
     "ts-node-dev": "^1.0.0-pre.51",
     "typescript": "^3.9.6"
