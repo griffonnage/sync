@@ -39,7 +39,7 @@
   "devDependencies": {
     "@types/express": "^4.17.8",
     "@types/jest": "^26.0.14",
-    "@types/node": "^14.11.2",
+    "@types/node": "^14.11.5",
     "@types/node-statsd": "^0.1.2",
     "@types/pino-http": "^5.0.5",
     "@types/socket.io": "^2.1.11",
