@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
       - name: Download build artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: build
           path: dist
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
       - name: Download build artifacts
-        uses: actions/download-artifact@v1
+        uses: actions/download-artifact@v2
         with:
           name: build
           path: dist
