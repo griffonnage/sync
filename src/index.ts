@@ -1,7 +1,7 @@
 import http from 'http'
 import express from 'express'
-import socketIO from 'socket.io'
-import redisAdapter from 'socket.io-redis'
+import { Server } from 'socket.io'
+import { createAdapter } from 'socket.io-redis'
 import { StatsD } from 'node-statsd'
 import pino from 'pino'
 import pinoHttp from 'pino-http'
@@ -32,6 +32,7 @@ enum Metrics {
 }
 
 const port = process.env.PORT || 80
+const corsOrigin = process.env.CORS_ORIGIN || undefined
 const redisUri = process.env.REDIS_URI || undefined
 const statsdHost = process.env.STATSD_HOST || undefined
 const statsdPort = process.env.STATSD_PORT
@@ -56,67 +57,60 @@ server.listen(port, () => {
   logger.info(`Server started on port ${port}`)
 })
 
-const io = socketIO(server)
+const io = new Server(server, {
+  cors: {
+    origin: corsOrigin,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+})
+
 if (redisUri) {
   logger.info('Enabling Socket-IO Redis adapter')
-  io.adapter(redisAdapter(redisUri))
+  io.adapter(createAdapter(redisUri))
 }
 
-io.on('connection', (socket) => {
+io.on('connection', async (socket) => {
   stats.increment(Metrics.usersCount)
 
-  io.sockets.clients((err: Error | undefined, clients: string[]) => {
-    if (!err) {
-      stats.gauge(Metrics.usersActive, clients.length)
-    }
-  })
+  const ids = await io.sockets.allSockets()
+  stats.gauge(Metrics.usersActive, ids.size)
 
   socket.on('error', () => {
     stats.increment(Metrics.errorsCount)
   })
 
-  socket.on('disconnect', () => {
-    io.sockets.clients((err: Error | undefined, clients: string[]) => {
-      if (!err) {
-        stats.gauge(Metrics.usersActive, clients.length)
-      }
-    })
+  socket.on('disconnect', async () => {
+    const ids = await io.sockets.allSockets()
+    stats.gauge(Metrics.usersActive, ids.size)
   })
 
-  socket.on('join-room', (room) => {
-    if (!(room in io.sockets.adapter.rooms)) {
-      // NOTE: this will not work properly with redis-adapter
-      // ideally, should call io.sockets.adapter.allRooms()
-      // https://github.com/socketio/socket.io-redis#redisadapterallroomsfnfunction
-      stats.increment(Metrics.roomsCount)
-    }
+  socket.on('join-room', async (room: string) => {
+    // if (!(room in io.sockets.adapter.rooms)) {
+    //   // NOTE: this will not work properly with redis-adapter
+    //   // ideally, should call io.sockets.adapter.allRooms()
+    //   // https://github.com/socketio/socket.io-redis#redisadapterallroomsfnfunction
+    //   stats.increment(Metrics.roomsCount)
+    // }
 
     socket.join(room)
     socket.to(room).emit(Events.userJoin, socket.id)
 
-    io.in(room).clients((err: Error | undefined, clients: string[]) => {
-      if (!err) {
-        io.in(room).emit(Events.userList, clients)
+    const ids = await io.in(room).allSockets()
+    io.in(room).emit(Events.userList, [...ids])
 
-        stats.gauge(Metrics.roomsSize, clients.length)
-      }
-    })
-
+    stats.gauge(Metrics.roomsSize, ids.size)
     stats.increment(Metrics.roomsJoinCount)
   })
 
-  socket.on('leave-room', (room) => {
+  socket.on('leave-room', async (room: string) => {
     socket.leave(room)
     socket.to(room).emit(Events.userLeave, socket.id)
 
-    io.in(room).clients((err: Error | undefined, clients: string[]) => {
-      if (!err) {
-        io.in(room).emit(Events.userList, clients)
+    const ids = await io.in(room).allSockets()
+    io.in(room).emit(Events.userList, [...ids])
 
-        stats.gauge(Metrics.roomsSize, clients.length)
-      }
-    })
-
+    stats.gauge(Metrics.roomsSize, ids.size)
     stats.increment(Metrics.roomsLeaveCount)
   })
 
