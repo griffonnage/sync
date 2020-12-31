@@ -18,7 +18,22 @@ $ npm install
 $ npm run dev
 
 // run in production mode
-$ npm start
+$ npm run build
+$ npm run start
+```
+
+## Docker
+
+### Build
+
+```
+docker build -t griffonnage/griffonnage-sync:latest .
+```
+
+### Run
+
+```
+docker run --rm --env-file .env -p 9000:9000 griffonnage/griffonnage-sync:latest
 ```
 
 ## Scaling

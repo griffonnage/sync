@@ -4,6 +4,8 @@ on: [push]
 
 env:
   NODE_VERSION: '12.20.0'
+  IMAGE_NAME: griffonnage/griffonnage-sync
+  IMAGE_TAG: latest
 
 jobs:
   test:
@@ -35,55 +37,82 @@ jobs:
       #   uses: codecov/codecov-action@v1
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build
-          path: dist
+
+  build-docker:
+    name: Docker build
+    runs-on: ubuntu-latest
+    needs: test
+    if: contains(github.ref, 'master') || contains(github.ref, 'tags')
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Select Docker image tag (production only)
+        if: contains(github.ref, 'tags')
+        run: echo "::set-env name=IMAGE_TAG::${GITHUB_REF##*/}"
+      - name: Log into Docker Registry
+        run: echo ${{ secrets.DOCKER_TOKEN }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+      - name: Pull latest Docker image
+        run: docker pull $IMAGE_NAME:latest || true
+      - name: Build Docker image (${{ env.IMAGE_TAG }})
+        run: docker build -t $IMAGE_NAME:$IMAGE_TAG --cache-from $IMAGE_NAME:latest .
+      - name: Push Docker image
+        run: |
+          docker push $IMAGE_NAME:$IMAGE_TAG
 
   deploy-staging:
     name: Deploy Staging
-    needs: test
+    needs: build-docker
     runs-on: ubuntu-latest
     if: contains(github.ref, 'master')
 
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build
-          path: dist
       - name: Deploy to Heroku
         env:
           HEROKU_APP_ID: ${{ secrets.HEROKU_APP_ID_STAGING }}
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
-          git push heroku HEAD:refs/heads/master
+          apt-get install --assume-yes --no-install-recommends curl
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          docker pull $IMAGE_NAME:$IMAGE_TAG
+          docker tag $IMAGE_NAME:$IMAGE_TAG registry.heroku.com/$HEROKU_APP_ID
+          IMAGE_ID=$(docker inspect $IMAGE_NAME:$IMAGE_TAG --format="{{.Id}}")
+          docker login --username=_ --password=$HEROKU_API_KEY registry.heroku.com
+          docker push registry.heroku.com/$HEROKU_APP_ID
+          curl -X PATCH https://api.heroku.com/apps/$HEROKU_APP_ID/formation \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/vnd.heroku+json; version=3.docker-releases" \
+            --header "Authorization: Bearer ${HEROKU_API_KEY}" \
+            --data '{ "updates": [ { "type": "web", "docker_image": "'$IMAGE_ID'" } ] }'
 
   deploy-production:
     name: Deploy Production
-    needs: test
+    needs: build-docker
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
 
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build
-          path: dist
       - name: Deploy to Heroku
         env:
           HEROKU_APP_ID: ${{ secrets.HEROKU_APP_ID_PRODUCTION }}
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
         run: |
-          git remote add heroku https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_ID.git
-          git push heroku HEAD:refs/heads/master
+          apt-get install --assume-yes --no-install-recommends curl
+          echo ${{ secrets.DOCKER_TOKEN }} | docker login -u ${{ secrets.DOCKER_USERNAME }} --password-stdin
+          echo "::set-env name=IMAGE_TAG::${GITHUB_REF##*/}"
+          docker pull $IMAGE_NAME:$IMAGE_TAG
+          docker tag $IMAGE_NAME:$IMAGE_TAG registry.heroku.com/$HEROKU_APP_ID
+          IMAGE_ID=$(docker inspect $IMAGE_NAME:$IMAGE_TAG --format="{{.Id}}")
+          docker login --username=_ --password=$HEROKU_API_KEY registry.heroku.com
+          docker push registry.heroku.com/$HEROKU_APP_ID
+          curl -X PATCH https://api.heroku.com/apps/$HEROKU_APP_ID/formation \
+            --header "Content-Type: application/json" \
+            --header "Accept: application/vnd.heroku+json; version=3.docker-releases" \
+            --header "Authorization: Bearer ${HEROKU_API_KEY}" \
+            --data '{ "updates": [ { "type": "web", "docker_image": "'$IMAGE_ID'" } ] }'
       - name: Deploy to CleverCloud
         uses: 47ng/actions-clever-cloud@v1
         with:
