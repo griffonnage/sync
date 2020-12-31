@@ -37,11 +37,6 @@ jobs:
       #   uses: codecov/codecov-action@v1
       #   with:
       #     token: ${{ secrets.CODECOV_TOKEN }}
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: build
-          path: dist
 
   build-docker:
     name: Docker build
@@ -66,18 +61,13 @@ jobs:
 
   deploy-staging:
     name: Deploy Staging
-    needs: test
+    needs: build-docker
     runs-on: ubuntu-latest
     if: contains(github.ref, 'master')
 
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build
-          path: dist
       - name: Deploy to Heroku
         env:
           HEROKU_APP_ID: ${{ secrets.HEROKU_APP_ID_STAGING }}
@@ -98,18 +88,13 @@ jobs:
 
   deploy-production:
     name: Deploy Production
-    needs: test
+    needs: build-docker
     runs-on: ubuntu-latest
     if: contains(github.ref, 'tags')
 
     steps:
       - uses: actions/checkout@v2
       - run: git fetch --prune --unshallow
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: build
-          path: dist
       - name: Deploy to Heroku
         env:
           HEROKU_APP_ID: ${{ secrets.HEROKU_APP_ID_PRODUCTION }}
