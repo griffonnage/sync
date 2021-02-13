@@ -1,5 +1,5 @@
 # build stage
-FROM node:12.20.1 as builder
+FROM node:12.20.2 as builder
 
 ENV APP_USER=app
 ENV APP_ROOT=/home/${APP_USER}
@@ -14,7 +14,7 @@ RUN npm install
 RUN npm run build
 
 # runtime stage
-FROM node:12.20.1
+FROM node:12.20.2
 
 ENV APP_USER=app
 ENV APP_GROUP=app
