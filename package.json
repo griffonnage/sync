@@ -42,7 +42,7 @@
     "@types/node-statsd": "^0.1.2",
     "@types/pino-http": "^5.4.0",
     "@types/socket.io": "^2.1.13",
-    "@types/socket.io-redis": "^1.0.26",
+    "@types/socket.io-redis": "^1.0.27",
     "@typescript-eslint/eslint-plugin": "^4.15.0",
     "@typescript-eslint/parser": "^4.15.0",
     "eslint": "^7.20.0",
