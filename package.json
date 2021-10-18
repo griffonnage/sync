@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/express": "^4.17.11",
-    "@types/jest": "^26.0.20",
+    "@types/jest": "^26.0.24",
     "@types/node": "^14.14.31",
     "@types/node-statsd": "^0.1.2",
     "@types/pino-http": "^5.4.0",
